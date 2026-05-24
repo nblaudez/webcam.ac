@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9146335306435460" crossorigin="anonymous"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>webcam.ac — Stanze di chat webcam</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0a0a0f;--surface:#111118;--surface2:#18181f;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);--accent:#7c6eff;--accent2:#a594ff;--accent-glow:rgba(124,110,255,0.18);--text:#f0eeff;--muted:#7b7a9a;--danger:#ff5e6c;--success:#3de89a;--radius:14px;--mono:'DM Mono',monospace;--display:'Syne',sans-serif; }
+  body { background:var(--bg);color:var(--text);font-family:var(--display);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden; }
+  body::before { content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,110,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,110,255,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0; }
+  body::after { content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(124,110,255,0.12) 0%,transparent 70%);pointer-events:none;z-index:0; }
+  header { position:relative;z-index:10;padding:1.2rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap; }
+  .logo-mark { width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px var(--accent-glow); }
+  .logo-mark svg { width:18px;height:18px;fill:white; }
+  .logo-text { font-size:1.2rem;font-weight:700;letter-spacing:-0.02em; }
+  .logo-sub { font-family:var(--mono);font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:1px; }
+  .lang-picker { margin-left:auto;display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap; }
+  .lang-btn { background:var(--surface2);border:1px solid var(--border2);border-radius:100px;color:var(--muted);font-family:var(--mono);font-size:0.62rem;padding:0.28rem 0.55rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;text-decoration:none;display:inline-block; }
+  .lang-btn:hover { border-color:var(--accent);color:var(--accent2); }
+  .lang-btn.active { background:var(--accent);border-color:var(--accent);color:white; }
+  .status-dot { display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:0.7rem;color:var(--muted);flex-shrink:0; }
+  .dot { width:7px;height:7px;border-radius:50%;background:var(--muted); }
+  .dot.live { background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2s infinite; }
+  .dot.err { background:var(--danger);box-shadow:0 0 8px var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  main { position:relative;z-index:10;flex:1;display:flex;flex-direction:column;align-items:center;padding:3rem 1.5rem 2rem; }
+  #lobby { width:100%;max-width:440px;display:flex;flex-direction:column; }
+  .lobby-title { font-size:2.4rem;font-weight:800;line-height:1.1;letter-spacing:-0.04em;margin-bottom:0.4rem; }
+  .lobby-title span { color:var(--accent2); }
+  .lobby-desc { font-family:var(--mono);font-size:0.8rem;color:var(--muted);margin-bottom:2.5rem;line-height:1.6; }
+  .form-group { display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.2rem; }
+  label { font-family:var(--mono);font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted); }
+  input[type="text"] { width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--display);font-size:1rem;font-weight:600;padding:0.9rem 1.1rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s; }
+  input[type="text"]::placeholder { color:var(--muted);font-weight:400; }
+  input[type="text"]:focus { border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow); }
+  .join-btn { margin-top:0.6rem;width:100%;background:var(--accent);border:none;border-radius:var(--radius);color:white;font-family:var(--display);font-size:1rem;font-weight:700;padding:1rem 1.5rem;cursor:pointer;transition:transform 0.15s,box-shadow 0.2s,background 0.2s;display:flex;align-items:center;justify-content:center;gap:0.6rem;box-shadow:0 4px 24px var(--accent-glow);letter-spacing:-0.01em; }
+  .join-btn:hover { background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 32px var(--accent-glow); }
+  .join-btn:active { transform:translateY(0); }
+  .join-btn:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+  .join-btn svg { width:18px;height:18px;flex-shrink:0; }
+  .error-msg { background:rgba(255,94,108,0.1);border:1px solid rgba(255,94,108,0.3);border-radius:10px;color:#ff8e98;font-family:var(--mono);font-size:0.75rem;padding:0.7rem 1rem;margin-top:0.8rem;display:none; }
+  #room { display:none;flex-direction:column;width:100%;max-width:1200px;gap:1.5rem; }
+  .room-bar { display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap; }
+  .room-badge { background:var(--surface2);border:1px solid var(--border2);border-radius:100px;padding:0.4rem 1rem;font-family:var(--mono);font-size:0.78rem;display:flex;align-items:center;gap:0.5rem; }
+  .room-badge-label { color:var(--muted); }
+  .room-badge-val { color:var(--accent2);font-weight:500; }
+  .mute-btn { background:rgba(61,232,154,0.1);border:1px solid rgba(61,232,154,0.3);border-radius:100px;color:var(--success);font-family:var(--mono);font-size:0.75rem;padding:0.4rem 1.1rem;cursor:pointer;transition:background 0.2s,border-color 0.2s,color 0.2s;display:flex;align-items:center;gap:0.5rem; }
+  .mute-btn:hover { background:rgba(61,232,154,0.2); }
+  .mute-btn.muted { background:rgba(255,94,108,0.12);border-color:rgba(255,94,108,0.3);color:var(--danger); }
+  .mute-btn.muted:hover { background:rgba(255,94,108,0.22); }
+  .mute-btn svg { width:14px;height:14px;flex-shrink:0; }
+  .leave-btn { background:rgba(255,94,108,0.12);border:1px solid rgba(255,94,108,0.25);border-radius:100px;color:var(--danger);font-family:var(--mono);font-size:0.75rem;padding:0.4rem 1.1rem;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;gap:0.5rem;margin-left:auto; }
+  .leave-btn:hover { background:rgba(255,94,108,0.22); }
+  .leave-btn svg { width:14px;height:14px; }
+  .peer-count { font-family:var(--mono);font-size:0.72rem;color:var(--muted); }
+  #video-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem; }
+  .video-tile { background:var(--surface);border:1px solid var(--border2);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;animation:fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .video-wrap { position:relative;width:100%;aspect-ratio:16/9;background:#08080e; }
+  .video-wrap video { width:100%;height:100%;object-fit:cover;display:block; }
+  .video-wrap .you-badge { position:absolute;top:10px;left:10px;background:var(--accent);color:white;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:100px;font-weight:500; }
+  .video-wrap .no-cam { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;color:var(--muted);font-family:var(--mono);font-size:0.75rem; }
+  .video-wrap .no-cam svg { width:36px;height:36px;opacity:0.35; }
+  .mute-overlay { position:absolute;top:10px;right:10px;background:rgba(255,94,108,0.85);border-radius:100px;padding:4px 9px;font-family:var(--mono);font-size:0.58rem;color:white;display:none;align-items:center;gap:4px;letter-spacing:0.08em; }
+  .mute-overlay svg { width:10px;height:10px; }
+  .muted-local .mute-overlay { display:flex; }
+  .nickname-bar { padding:0.75rem 1rem;display:flex;align-items:center;gap:0.6rem;border-top:1px solid var(--border); }
+  .avatar { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0; }
+  .nickname-text { font-size:0.9rem;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .empty-state { grid-column:1/-1;padding:4rem 2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;color:var(--muted);text-align:center; }
+  .empty-state svg { width:48px;height:48px;opacity:0.3; }
+  .empty-state p { font-family:var(--mono);font-size:0.8rem;line-height:1.7;max-width:280px;white-space:pre-line; }
+  #cam-modal { display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;background:rgba(10,10,15,0.85);backdrop-filter:blur(4px); }
+  #cam-modal.show { display:flex; }
+  .modal-card { background:var(--surface);border:1px solid var(--border2);border-radius:22px;padding:2.5rem;max-width:380px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.2rem;box-shadow:0 40px 100px rgba(0,0,0,0.6); }
+  .modal-icon { width:64px;height:64px;background:var(--accent-glow);border-radius:18px;display:flex;align-items:center;justify-content:center; }
+  .modal-icon svg { width:32px;height:32px;stroke:var(--accent2); }
+  .modal-title { font-size:1.3rem;font-weight:700;letter-spacing:-0.03em; }
+  .modal-desc { font-family:var(--mono);font-size:0.75rem;color:var(--muted);line-height:1.7; }
+  .modal-btn { width:100%;background:var(--accent);border:none;border-radius:var(--radius);color:white;font-family:var(--display);font-size:0.95rem;font-weight:700;padding:0.85rem;cursor:pointer;transition:background 0.2s; }
+  .modal-btn:hover { background:var(--accent2); }
+  .modal-btn-skip { background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:0.75rem;padding:0.6rem; }
+  .modal-btn-skip:hover { background:var(--surface2);color:var(--text); }
+  .spinner { width:20px;height:20px;border:2px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;display:none; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .info-strip { font-family:var(--mono);font-size:0.68rem;color:var(--muted);text-align:center;margin-top:1.5rem;line-height:2; }
+  @media (max-width:700px) { header{padding:1rem} .lang-picker{gap:0.25rem} .lang-btn{font-size:0.55rem;padding:0.22rem 0.45rem} .lobby-title{font-size:1.8rem} #video-grid{grid-template-columns:1fr} .room-bar{gap:0.5rem} }
+
+  /* ── Cookie banner ── */
+  #cookie-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-height: 250px;
+    z-index: 200;
+    background: var(--surface);
+    border-top: 1px solid var(--border2);
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.2rem 2rem;
+    flex-wrap: wrap;
+    animation: slideUp 0.35s cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+  #cookie-banner.hide {
+    animation: slideDown 0.3s ease forwards;
+  }
+  @keyframes slideDown { to{transform:translateY(100%);opacity:0} }
+  .cookie-icon { font-size: 2rem; flex-shrink: 0; }
+  .cookie-text { flex: 1; min-width: 200px; }
+  .cookie-text strong { display:block; font-size:0.95rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:0.3rem; }
+  .cookie-text p { font-family:var(--mono); font-size:0.72rem; color:var(--muted); line-height:1.6; }
+  .cookie-actions { display:flex; gap:0.6rem; flex-shrink:0; flex-wrap:wrap; }
+  .cookie-accept {
+    background: var(--accent); border: none; border-radius: var(--radius);
+    color: white; font-family: var(--display); font-size: 0.85rem; font-weight: 700;
+    padding: 0.6rem 1.4rem; cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 2px 12px var(--accent-glow);
+  }
+  .cookie-accept:hover { background:var(--accent2); transform:translateY(-1px); }
+  .cookie-decline {
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--muted);
+    font-family: var(--mono); font-size: 0.75rem;
+    padding: 0.6rem 1.1rem; cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .cookie-decline:hover { background:var(--surface2); color:var(--text); border-color:var(--muted); }
+  @media (max-width:600px) {
+    #cookie-banner { padding:1rem; gap:1rem; }
+    .cookie-actions { width:100%; }
+    .cookie-accept, .cookie-decline { flex:1; text-align:center; }
+  }
+
+
+  #cookie-banner{position:fixed;bottom:0;left:0;right:0;max-height:250px;z-index:200;background:var(--surface);border-top:1px solid var(--border2);box-shadow:0 -8px 40px rgba(0,0,0,0.45);display:none;align-items:center;gap:1.5rem;padding:1.2rem 2rem;flex-wrap:wrap;animation:slideUp 0.35s cubic-bezier(0.22,1,0.36,1)}
+  @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+  #cookie-banner.hide{animation:slideDown 0.3s ease forwards}
+  @keyframes slideDown{to{transform:translateY(100%);opacity:0}}
+  .cookie-icon{font-size:2rem;flex-shrink:0}
+  .cookie-text{flex:1;min-width:200px}
+  .cookie-text strong{display:block;font-size:0.95rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:0.3rem}
+  .cookie-text p{font-family:var(--mono);font-size:0.72rem;color:var(--muted);line-height:1.6}
+  .cookie-actions{display:flex;gap:0.6rem;flex-shrink:0;flex-wrap:wrap}
+  .cookie-accept{background:var(--accent);border:none;border-radius:var(--radius);color:white;font-family:var(--display);font-size:0.85rem;font-weight:700;padding:0.6rem 1.4rem;cursor:pointer;transition:background 0.2s,transform 0.15s;box-shadow:0 2px 12px var(--accent-glow)}
+  .cookie-accept:hover{background:var(--accent2);transform:translateY(-1px)}
+  .cookie-decline{background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--muted);font-family:var(--mono);font-size:0.75rem;padding:0.6rem 1.1rem;cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s}
+  .cookie-decline:hover{background:var(--surface2);color:var(--text);border-color:var(--muted)}
+  @media(max-width:600px){#cookie-banner{padding:1rem;gap:1rem}.cookie-actions{width:100%}.cookie-accept,.cookie-decline{flex:1;text-align:center}}
+
+  .adsense-bar { width:100%; text-align:center; background:var(--surface); border-bottom:1px solid var(--border); padding:0.5rem 1rem; overflow:hidden; }
+  .adsense-bar ins { display:block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 10l4.55-2.5A1 1 0 0 1 21 8.5v7a1 1 0 0 1-1.45.9L15 14M4 8h9a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"/></svg>
+  </div>
+  <div>
+    <div class="logo-text">webcam.ac</div>
+    <div class="logo-sub">Stanze di chat webcam</div>
+  </div>
+  <div class="lang-picker">
+    <a href="../fr/" class="lang-btn">🇫🇷 FR</a>
+    <a href="../en/" class="lang-btn">🇬🇧 EN</a>
+    <a href="../de/" class="lang-btn">🇩🇪 DE</a>
+    <a href="../hi/" class="lang-btn">🇮🇳 HI</a>
+    <a href="../es/" class="lang-btn">🇪🇸 ES</a>
+    <a href="../ru/" class="lang-btn">🇷🇺 RU</a>
+    <a href="../it/" class="lang-btn active">🇮🇹 IT</a>
+    <a href="../no/" class="lang-btn">🇳🇴 NO</a>
+    <a href="../sv/" class="lang-btn">🇸🇪 SV</a>
+    <a href="../pt/" class="lang-btn">🇵🇹 PT</a>
+    <a href="../zh/" class="lang-btn">🇨🇳 中文</a>
+  </div>
+  <div class="status-dot">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">pronto</span>
+  </div>
+</header>
+<div class="adsense-bar">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9146335306435460"
+       data-ad-slot="auto"
+       data-ad-format="horizontal"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<main>
+  <div id="lobby">
+    <div class="lobby-title">Entra in una <span>stanza</span> video</div>
+    <div class="lobby-desc">Stanze di chat webcam — entra in una stanza e condividi la tua fotocamera.</div>
+    <div class="form-group">
+      <label for="salon-input">Nome della stanza</label>
+      <input type="text" id="salon-input" placeholder="es. team-design" maxlength="40" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="form-group">
+      <label for="nick-input">Il tuo soprannome</label>
+      <input type="text" id="nick-input" placeholder="es. Maria" maxlength="24" autocomplete="off">
+    </div>
+    <button class="join-btn" id="join-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      <span id="join-btn-text">Entra nella stanza</span>
+      <div class="spinner" id="join-spinner"></div>
+    </button>
+    <div class="error-msg" id="error-msg"></div>
+    <div class="info-strip">webcam.ac &mdash; Stanze di chat webcam</div>
+  </div>
+
+  <div id="room">
+    <div class="room-bar">
+      <div class="room-badge">
+        <span class="room-badge-label">#</span>
+        <span class="room-badge-val" id="bar-salon"></span>
+      </div>
+      <div class="room-badge">
+        <span class="room-badge-label">Tu:</span>
+        <span class="room-badge-val" id="bar-nick"></span>
+      </div>
+      <div class="peer-count" id="peer-count"></div>
+      <button class="mute-btn" id="mute-btn">
+        <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+        <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23M12 19v4M8 23h8"/></svg>
+        <span id="mute-btn-text">Microfono attivo</span>
+      </button>
+      <button class="leave-btn" id="leave-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Esci
+      </button>
+    </div>
+    <div id="video-grid">
+      <div class="empty-state" id="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <p>Sei solo/a in questa stanza.
+Condividi il nome della stanza per invitare qualcuno.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="cam-modal">
+  <div class="modal-card">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.55-2.5A1 1 0 0 1 21 8.5v7a1 1 0 0 1-1.45.9L15 14M4 8h9a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"/></svg>
+    </div>
+    <div class="modal-title">Accesso alla fotocamera</div>
+    <div class="modal-desc">webcam.ac ha bisogno di accedere alla tua fotocamera e microfono per trasmettere il video nella stanza.</div>
+    <button class="modal-btn" id="modal-allow">Consenti fotocamera</button>
+    <button class="modal-btn modal-btn-skip" id="modal-skip">Continua senza fotocamera</button>
+  </div>
+</div>
+
+<script>
+const ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun.l.google.com:5349'},{urls:'stun:stun1.l.google.com:3478'},{urls:'stun:stun1.l.google.com:5349'},{urls:'stun:stun2.l.google.com:19302'},{urls:'stun:stun2.l.google.com:5349'},{urls:'stun:stun3.l.google.com:3478'},{urls:'stun:stun3.l.google.com:5349'},{urls:'stun:stun4.l.google.com:19302'},{urls:'stun:stun4.l.google.com:5349'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:freestun.net:3478'},{urls:'stun:freestun.net:5350'},{urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},{urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},{urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'},{urls:'turn:freestun.net:3478',username:'free',credential:'free'},{urls:'turns:freestun.net:5350',username:'free',credential:'free'}];
+const PEERJS_CONFIG={host:'0.peerjs.com',port:443,secure:true,path:'/',debug:0,config:{iceServers:ICE_SERVERS,iceTransportPolicy:'all'}};
+
+const STR={
+  joining:'Connessione…',
+  joinBtn:'Entra nella stanza',
+  errSalon:'Inserisci un nome per la stanza.',
+  errNick:'Inserisci un soprannome.',
+  errSalonShort:'Il nome della stanza deve avere almeno 2 caratteri.',
+  errConnect:'Impossibile connettersi. Controlla la connessione internet.',
+  muteOn:'Microfono attivo',
+  muteOff:'Microfono disattivato',
+  youSuffix:' (io)',
+  camDisabled:'Fotocamera disattivata',
+  participants:n=>n + ' partecipante' + (n > 1 ? 'i' : ''),
+  statusReady:'pronto',
+  statusConnected:'connesso',
+  statusHost:'host · connesso',
+  statusError:'errore',
+};
+
+const AVATAR_COLORS=[['#4c3fcc','#aca4ff'],['#1a6e8e','#5dd3f5'],['#2e6e3a','#62e07a'],['#7a2e5b','#e87dd0'],['#7a4a1a','#f5ac55'],['#2e4e7a','#74a8f5']];
+let peer=null,localStream=null,myNick='',connections={},localPeerId=null,isMicMuted=false,isHost=false,roomMembers={};
+function $(id){return document.getElementById(id);}
+const $lobby=$('lobby'),$room=$('room'),$salonInput=$('salon-input'),$nickInput=$('nick-input');
+const $joinBtn=$('join-btn'),$joinText=$('join-btn-text'),$joinSpinner=$('join-spinner');
+const $errorMsg=$('error-msg'),$grid=$('video-grid'),$emptyState=$('empty-state');
+const $barSalon=$('bar-salon'),$barNick=$('bar-nick'),$peerCount=$('peer-count');
+const $leaveBtn=$('leave-btn'),$muteBtn=$('mute-btn'),$muteIconOn=$('mute-icon-on');
+const $muteIconOff=$('mute-icon-off'),$muteBtnText=$('mute-btn-text');
+const $statusDot=$('status-dot'),$statusText=$('status-text');
+const $camModal=$('cam-modal'),$modalAllow=$('modal-allow'),$modalSkip=$('modal-skip');
+
+function avatarColor(n){let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))&0xffffffff;return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length];}
+function initials(n){return n.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';}
+function slugify(s){return s.trim().toLowerCase().replace(/[^a-z0-9-_]/g,'-').replace(/-+/g,'-');}
+function setStatus(cls,txt){$statusDot.className='dot'+(cls?' '+cls:'');$statusText.textContent=txt;}
+function showError(m){$errorMsg.style.display='block';$errorMsg.textContent=m;}
+function hideError(){$errorMsg.style.display='none';}
+function updateCount(){const n=Object.keys(connections).length+1;$peerCount.textContent=STR.participants(n);$emptyState.style.display=Object.keys(connections).length===0?'flex':'none';}
+
+function applyMute(){
+  if(localStream)localStream.getAudioTracks().forEach(t=>{t.enabled=!isMicMuted;});
+  $muteBtn.classList.toggle('muted',isMicMuted);
+  $muteIconOn.style.display=isMicMuted?'none':'block';
+  $muteIconOff.style.display=isMicMuted?'block':'none';
+  $muteBtnText.textContent=isMicMuted?STR.muteOff:STR.muteOn;
+  const lt=document.getElementById('tile-'+localPeerId);
+  if(lt)lt.classList.toggle('muted-local',isMicMuted);
+}
+$muteBtn.addEventListener('click',()=>{isMicMuted=!isMicMuted;applyMute();});
+
+function createTile(peerId,nick,stream,isLocal){
+  const tile=document.createElement('div');
+  tile.className='video-tile';tile.id='tile-'+peerId;
+  const c=avatarColor(nick);
+  const youBadgeHtml=isLocal?`<div class="you-badge">io</div><div class="mute-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>MUTE</div>`:'';
+  tile.innerHTML=`
+    <div class="video-wrap">
+      <video id="vid-${peerId}" autoplay ${isLocal?'muted':''} playsinline></video>
+      ${youBadgeHtml}
+      <div class="no-cam" id="nocam-${peerId}" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2M20 8.5v7M10 5h4a2 2 0 0 1 2 2v1M1 1l22 22"/></svg>
+        <span>${STR.camDisabled}</span>
+      </div>
+    </div>
+    <div class="nickname-bar">
+      <div class="avatar" style="background:${c[0]};color:${c[1]}">${initials(nick)}</div>
+      <span class="nickname-text">${nick}</span>
+    </div>`;
+  $grid.insertBefore(tile,$emptyState);
+  const video=document.getElementById('vid-'+peerId),nocam=document.getElementById('nocam-'+peerId);
+  if(stream)attachStream(video,nocam,stream);else{video.style.display='none';nocam.style.display='flex';}
+}
+function attachStream(v,nc,stream){if(!stream)return;const hv=stream.getVideoTracks&&stream.getVideoTracks().length>0;v.srcObject=stream;v.style.display=hv?'block':'none';if(nc)nc.style.display=hv?'none':'flex';}
+function removeTile(p){const t=document.getElementById('tile-'+p);if(t)t.remove();}
+
+function promptCamera(){
+  return new Promise(resolve=>{
+    $camModal.classList.add('show');
+    $modalAllow.onclick=async()=>{$camModal.classList.remove('show');try{resolve(await navigator.mediaDevices.getUserMedia({video:true,audio:true}));}catch(e){resolve(null);}};
+    $modalSkip.onclick=()=>{$camModal.classList.remove('show');resolve(null);};
+  });
+}
+
+function startPeer(stream){
+  return new Promise((resolve,reject)=>{
+    const p=new Peer(undefined,PEERJS_CONFIG);
+    p.on('open',id=>{localPeerId=id;setStatus('live',STR.statusConnected);resolve(p);});
+    p.on('error',err=>{setStatus('err',STR.statusError);if(err.type==='peer-unavailable')return;reject(err);});
+    p.on('disconnected',()=>setStatus('',''));
+    p.on('connection',conn=>setupDataConn(conn,stream));
+    p.on('call',call=>{
+      call.answer(stream||new MediaStream());
+      call.on('stream',rs=>{const pid=call.peer;if(connections[pid]){connections[pid].stream=rs;const v=document.getElementById('vid-'+pid),nc=document.getElementById('nocam-'+pid);if(v)attachStream(v,nc,rs);}});
+      call.on('close',()=>handleLeave(call.peer));call.on('error',()=>handleLeave(call.peer));
+      if(!connections[call.peer])connections[call.peer]={call,conn:null,stream:null,nick:'?'};else connections[call.peer].call=call;
+    });
+  });
+}
+
+function setupDataConn(conn,stream){
+  const pid=conn.peer;
+  conn.on('open',()=>{if(!connections[pid])connections[pid]={};connections[pid].conn=conn;});
+  conn.on('data',data=>{
+    if(data.type==='hello'){
+      const nick=data.nick;if(!connections[pid])connections[pid]={conn,call:null,stream:null};connections[pid].nick=nick;
+      if(isHost){const ml=Object.entries(roomMembers).map(([id,n])=>({id,nick:n}));ml.push({id:localPeerId,nick:myNick});conn.send({type:'member-list',members:ml});Object.values(connections).forEach(c=>{if(c.conn&&c.conn!==conn)try{c.conn.send({type:'peer-joined',id:pid,nick});}catch(e){}});roomMembers[pid]=nick;}
+      if(!document.getElementById('tile-'+pid)){createTile(pid,nick,null,false);updateCount();}
+    }else if(data.type==='member-list'){
+      data.members.forEach(m=>{if(m.id===localPeerId)return;if(!connections[m.id])connections[m.id]={conn:null,call:null,stream:null,nick:m.nick};else connections[m.id].nick=m.nick;if(!document.getElementById('tile-'+m.id))createTile(m.id,m.nick,null,false);callPeer(m.id,stream);});updateCount();
+    }else if(data.type==='peer-joined'){
+      const{id,nick}=data;if(id===localPeerId)return;if(!connections[id])connections[id]={conn:null,call:null,stream:null,nick};else connections[id].nick=nick;if(!document.getElementById('tile-'+id)){createTile(id,nick,null,false);updateCount();}
+    }else if(data.type==='peer-left'){handleLeave(data.id);}else if(data.type==='bye'){handleLeave(pid);}
+  });
+  conn.on('close',()=>handleLeave(pid));conn.on('error',()=>handleLeave(pid));
+}
+
+function callPeer(pid,stream){
+  const call=peer.call(pid,stream||new MediaStream());if(!call)return;
+  connections[pid]=connections[pid]||{};connections[pid].call=call;
+  call.on('stream',rs=>{connections[pid].stream=rs;const v=document.getElementById('vid-'+pid),nc=document.getElementById('nocam-'+pid);if(v)attachStream(v,nc,rs);});
+  call.on('close',()=>handleLeave(pid));call.on('error',()=>handleLeave(pid));
+}
+
+function handleLeave(pid){
+  if(!connections[pid])return;
+  if(isHost){delete roomMembers[pid];Object.values(connections).forEach(c=>{if(c.conn)try{c.conn.send({type:'peer-left',id:pid});}catch(e){}});}
+  try{connections[pid].call&&connections[pid].call.close();}catch(e){}try{connections[pid].conn&&connections[pid].conn.close();}catch(e){}
+  delete connections[pid];removeTile(pid);updateCount();
+}
+
+async function joinRoom(salon,nick,stream){
+  const hostId='cs-'+slugify(salon)+'-host';const hostConn=peer.connect(hostId,{reliable:true,metadata:{nick}});
+  return new Promise(resolve=>{
+    const to=setTimeout(()=>{hostConn.close();becomeHost(salon,nick,stream,hostId,resolve);},3000);
+    hostConn.on('open',()=>{clearTimeout(to);setupDataConn(hostConn,stream);connections[hostConn.peer]={conn:hostConn,call:null,stream:null,nick:'?'};hostConn.send({type:'hello',nick});resolve({asHost:false});});
+    hostConn.on('error',()=>{clearTimeout(to);becomeHost(salon,nick,stream,hostId,resolve);});
+  });
+}
+
+async function becomeHost(salon,nick,stream,hostId,resolve){
+  isHost=true;roomMembers[localPeerId]=nick;peer.destroy();
+  const hp=new Peer(hostId,PEERJS_CONFIG);
+  await new Promise((res,rej)=>{
+    hp.on('open',id=>{localPeerId=id;setStatus('live',STR.statusHost);res();});
+    hp.on('error',err=>{if(err.type==='unavailable-id'){hp.destroy();setTimeout(()=>joinRoom(salon,nick,stream).then(resolve),500);}else{setStatus('err',STR.statusError);rej(err);}});
+    hp.on('connection',conn=>setupDataConn(conn,stream));
+    hp.on('call',call=>{call.answer(stream||new MediaStream());call.on('stream',rs=>{const pid=call.peer;if(connections[pid]){connections[pid].stream=rs;const v=document.getElementById('vid-'+pid),nc=document.getElementById('nocam-'+pid);if(v)attachStream(v,nc,rs);}});call.on('close',()=>handleLeave(call.peer));if(!connections[call.peer])connections[call.peer]={call,conn:null,stream:null,nick:'?'};else connections[call.peer].call=call;});
+  });
+  peer=hp;resolve({asHost:true});
+}
+
+$joinBtn.addEventListener('click',async()=>{
+  hideError();
+  const salon=$salonInput.value.trim(),nick=$nickInput.value.trim();
+  if(!salon){showError(STR.errSalon);$salonInput.focus();return;}
+  if(!nick){showError(STR.errNick);$nickInput.focus();return;}
+  if(salon.length<2){showError(STR.errSalonShort);return;}
+  myNick=nick;
+  $joinBtn.disabled=true;$joinText.textContent=STR.joining;$joinSpinner.style.display='block';setStatus('',STR.statusConnected+'…');
+  localStream=await promptCamera();
+  try{
+    peer=await startPeer(localStream);
+    $lobby.style.display='none';$room.style.display='flex';
+    $barSalon.textContent=salon;$barNick.textContent=nick;
+    isMicMuted=false;applyMute();
+    createTile(localPeerId,nick+STR.youSuffix,localStream,true);updateCount();
+    await joinRoom(salon,nick,localStream);updateCount();
+  }catch(err){console.error(err);showError(STR.errConnect);$lobby.style.display='flex';$room.style.display='none';}
+  finally{$joinBtn.disabled=false;$joinText.textContent=STR.joinBtn;$joinSpinner.style.display='none';}
+});
+
+$leaveBtn.addEventListener('click',()=>{
+  Object.values(connections).forEach(c=>{if(c.conn)try{c.conn.send({type:'bye'});}catch(e){}if(c.call)try{c.call.close();}catch(e){}if(c.conn)try{c.conn.close();}catch(e){}});
+  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
+  if(peer){peer.destroy();peer=null;}
+  connections={};isHost=false;roomMembers={};localPeerId=null;isMicMuted=false;
+  Array.from($grid.children).forEach(c=>{if(c!==$emptyState)c.remove();});
+  $emptyState.style.display='flex';$room.style.display='none';$lobby.style.display='flex';
+  setStatus('',STR.statusReady);
+});
+
+[$salonInput,$nickInput].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')$joinBtn.click();}));
+
+</script>
+
+<div id="cookie-banner">
+  <div class="cookie-icon">🍪</div>
+  <div class="cookie-text">
+    <strong>Questo sito usa i cookie</strong>
+    <p>Utilizziamo i cookie per migliorare la tua esperienza e analizzare il traffico. Puoi accettare o rifiutare il loro utilizzo.</p>
+  </div>
+  <div class="cookie-actions">
+    <button class="cookie-accept" id="cookie-accept">Accetta</button>
+    <button class="cookie-decline" id="cookie-decline">Rifiuta</button>
+  </div>
+</div>
+<script>
+(function(){
+  var key='webcam_ac_cookies';
+  if(localStorage.getItem(key))return;
+  var banner=document.getElementById('cookie-banner');
+  function dismiss(val){
+    localStorage.setItem(key,val);
+    banner.classList.add('hide');
+    setTimeout(function(){banner.style.display='none';},320);
+  }
+  document.getElementById('cookie-accept').addEventListener('click',function(){dismiss('accepted');});
+  document.getElementById('cookie-decline').addEventListener('click',function(){dismiss('declined');});
+})();
+</script>
+<div id="cookie-banner"><div class="cookie-icon">🍪</div><div class="cookie-text"><strong>Questo sito usa i cookie</strong><p>Utilizziamo i cookie per migliorare la tua esperienza e analizzare il traffico. Puoi accettare o rifiutare il loro utilizzo.</p></div><div class="cookie-actions"><button class="cookie-accept" id="cookie-accept">Accetta</button><button class="cookie-decline" id="cookie-decline">Rifiuta</button></div></div>
+<script>(function(){
+  var k = 'webcam_ac_cookies';
+  var b = document.getElementById('cookie-banner');
+  if (localStorage.getItem(k)) { b.style.display = 'none'; return; }
+  b.style.display = 'flex';
+  function dismiss(v) {
+    localStorage.setItem(k, v);
+    b.classList.add('hide');
+    setTimeout(function(){ b.style.display = 'none'; }, 320);
+  }
+  document.getElementById('cookie-accept').addEventListener('click', function(){ dismiss('accepted'); });
+  document.getElementById('cookie-decline').addEventListener('click', function(){ dismiss('declined'); });
+})();</script>
+</body>
+</html>
